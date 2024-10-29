@@ -7,8 +7,6 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 const PIPELINES_URL = process.env.REACT_APP_PIPELINES_URL;
 
@@ -18,16 +16,27 @@ function getParams(location) {
     address: searchParams.get('address') || '',
     pipeline: searchParams.get('pipeline') || '',
     model: searchParams.get('model') || '',
-    aiJobs: searchParams.get('aiJobs') === 'true', // Parse boolean value
+    since: searchParams.get('since') || undefined,
+    until: searchParams.get('until') || undefined,
   };
 }
 
-function setParams({ address = '', pipeline = '', model = '', aiJobs = false }) {
+function setParams({ address = '', pipeline = '', model = '', since =undefined, until = undefined }) {
   const params = new URLSearchParams();
   params.set('address', address);
-  params.set('pipeline', pipeline);
-  params.set('model', model);
-  params.set('aiJobs', aiJobs);
+
+  if (pipeline !== '')
+    params.set('pipeline', pipeline);
+
+  if (model !== '')
+    params.set('model', model);
+
+  if (since)
+    params.set('since', since);
+
+  if (until)
+    params.set('until', until);
+
   window.history.pushState({}, '', `${location.pathname}?${params}`);
   return params.toString();
 }
@@ -40,13 +49,15 @@ class App extends React.Component {
     const address = params.address;
     const pipeline = params.pipeline;
     const model = params.model;
-    const aiJobs = params.aiJobs; // Default is false if not specified
+    const since = params.since;
+    const until = params.until;
 
     this.state = {
       orchAddress: address,
       pipeline,
       model,
-      aiJobs,
+      since,
+      until,
       textFieldInput: address,
       pipelineOptions: [],
       modelOptions: [],
@@ -57,7 +68,6 @@ class App extends React.Component {
     this.handlePipelineChange = this.handlePipelineChange.bind(this);
     this.handleModelChange = this.handleModelChange.bind(this);
     this.handleTextFieldChange = this.handleTextFieldChange.bind(this);
-    this.handleAiJobsChange = this.handleAiJobsChange.bind(this);
     this.setAddress = this.setAddress.bind(this);
     this.catchReturn = this.catchReturn.bind(this);
     this.handlePopState = this.handlePopState.bind(this);
@@ -100,7 +110,8 @@ class App extends React.Component {
       orchAddress: params.address,
       pipeline: params.pipeline,
       model: params.model,
-      aiJobs: params.aiJobs,
+      since: params.since,
+      until: params.until,
       textFieldInput: params.address,
     }, () => {
       // Optionally, update model options when the pipeline changes
@@ -126,7 +137,6 @@ class App extends React.Component {
       address,
       pipeline: this.state.pipeline,
       model: this.state.model,
-      aiJobs: this.state.aiJobs,
     });
     this.setState({ orchAddress: address });
   }
@@ -140,31 +150,23 @@ class App extends React.Component {
     this.setState({ pipeline, modelOptions, model }); // Reset model when pipeline changes
     setParams({
       address: this.state.orchAddress,
+      since: this.state.since,
+      until: this.state.until,
       pipeline,
-      model,
-      aiJobs: this.state.aiJobs
+      model
     });
   }
 
   handleModelChange(event) {
     const model = event.target.value;
+    console.log(' hadle model change state" ', this.state);
     this.setState({ model });
     setParams({
       address: this.state.orchAddress,
       pipeline: this.state.pipeline,
-      model,
-      aiJobs: this.state.aiJobs,
-    });
-  }
-
-  handleAiJobsChange(event) {
-    const aiJobs = event.target.checked;
-    this.setState({ aiJobs });
-    setParams({
-      address: this.state.orchAddress,
-      pipeline: this.state.pipeline,
-      model: this.state.model,
-      aiJobs,
+      since: this.state.since,
+      until: this.state.until,
+      model
     });
   }
 
@@ -178,22 +180,10 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
-        <div className="card text-center m-3">
-          <div className="card text-center m-3 inputHeader">
+        <div className="card text-center">
+          <div className="card text-center inputHeader">
             {/* Use Flexbox to arrange items horizontally */}
             <div className="form-row" style={{ display: 'flex', alignItems: 'center' }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.aiJobs}
-                    onChange={this.handleAiJobsChange}
-                    name="aiJobs"
-                    color="primary"
-                  />
-                }
-                label="AI Jobs"
-                style={{ marginRight: '10px' }}
-              />
               <TextField
                 id="filled-basic"
                 className="addressField"
@@ -211,10 +201,7 @@ class App extends React.Component {
               </div>
             </div>
           </div>
-
-          {/* Render pipeline and model dropdowns with padding */}
-          {this.state.aiJobs && (
-            <div className="card text-center m-3 inputHeader">
+            <div className="card text-center inputHeader">
               <div className="dropdown-container" style={{ display: 'flex', alignItems: 'center' }}>
                 <FormControl
                   variant="filled"
@@ -228,6 +215,9 @@ class App extends React.Component {
                     value={this.state.pipeline}
                     onChange={this.handlePipelineChange}
                   >
+                    <MenuItem key="None" value="">
+                      None
+                    </MenuItem>
                     {this.state.pipelineOptions.map((option) => (
                       <MenuItem key={option} value={option}>
                         {option}
@@ -255,12 +245,13 @@ class App extends React.Component {
                 )}
               </div>
             </div>
-          )}
           <StatsTable
             address={this.state.orchAddress}
-            aiJobs={this.state.aiJobs}
+            aiJobs={(this.state.model !== '' || this.state.pipeline !== '')}
             pipeline={this.state.pipeline}
             model={this.state.model}
+            since={this.state.since}
+            until={this.state.until}
           />
         </div>
       </div>

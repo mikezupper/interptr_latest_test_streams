@@ -28,21 +28,6 @@ const columnsAIJobs = [
     title: 'Test Passed',
     field: 'successRate',
     width: '50px',
-    render: (rowData) => {
-      let errors = JSON.stringify(rowData.errors, null, 2); // Format JSON with indentation
-      return (
-        <Tooltip
-          title={
-            <div style={{ whiteSpace: 'normal', maxWidth: '300px', wordWrap: 'break-word' }}>
-              {errors}
-            </div>
-          }
-          arrow
-        >
-          <span>{rowData.successRate}</span>
-        </Tooltip>
-      );
-    },
   },
   {
     title: 'Roundtrip Time',
@@ -112,11 +97,17 @@ class AIStatsTable extends React.Component {
     // Construct URL with orchestrator, pipeline, and model parameters
     const params = new URLSearchParams();
     params.set('orchestrator', props.address);
-    if (props.pipeline) {
+    if (props.pipeline !== '') {
       params.set('pipeline', props.pipeline);
     }
-    if (props.model) {
+    if (props.model !== '') {
       params.set('model', props.model);
+    }
+    if (props.since) {
+      params.set('since', props.since);
+    }
+    if (props.until) {
+      params.set('until', props.until);
     }
     const url = aiJobsDataUrl + params.toString();
 
@@ -163,7 +154,10 @@ class AIStatsTable extends React.Component {
   }
 
   componentDidMount() {
-    this.fetchData(this.props);
+    // Simple GET request using fetch
+    if (this.props.address !== '' && this.props.model !== '' && this.props.pipeline !== '') {
+      this.fetchData(this.props);
+    }
   }
 
   componentDidUpdate(prevProps) {

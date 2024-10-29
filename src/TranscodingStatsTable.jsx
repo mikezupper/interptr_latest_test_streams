@@ -80,7 +80,6 @@ class TranscodingStatsTable extends React.Component {
     this.state = {
       leaderboardStats: [],
     };
-    this.fetchData(this.props.address);
   }
 
   fetchData(address) {
@@ -110,9 +109,14 @@ class TranscodingStatsTable extends React.Component {
             const trans_time = (transcode_time === undefined ? 0.00 : transcode_time);
             const down_time = (download_time === undefined ? 0.00 : transcode_time);
             const up_time = (upload_time === undefined ? 0.00 : upload_time);
-            const rt_time = (round_trip_time === undefined ? 0.00 : round_trip_time);
-            const fast = seg_duration > round_trip_time;
-            const success = trans_time > 0;
+            const rt_time = (round_trip_time === undefined ? 0.00 : round_trip_time.toFixed(2));
+            const seg_dur = (seg_duration === undefined ? 0.00 : seg_duration.toFixed(2));
+            const transtime = (trans_time === undefined ? 0.00 : trans_time.toFixed(2));
+            const uptime = (up_time === undefined ? 0.00 : up_time.toFixed(2));
+            const downtime = (down_time === undefined ? 0.00 : down_time.toFixed(2));
+
+            const fast = seg_dur > round_trip_time;
+            const success = transtime > 0;
             const isRealTime = fast && success ? 'Yes' : 'No';
             const error_json = JSON.stringify(errors, undefined, 2);
 
@@ -122,13 +126,13 @@ class TranscodingStatsTable extends React.Component {
               isRealTime,
               orchestrator,
               error_json,
-              roundTripTime: rt_time.toFixed(2),
+              roundTripTime: rt_time,
               segmentsReceived: segments_received,
               segmentsSent: segments_sent,
-              segmentDuration: seg_duration.toFixed(2),
-              transcodeTime: trans_time.toFixed(2),
-              uploadTime: up_time.toFixed(2),
-              downloadTime: down_time.toFixed(2),
+              segmentDuration: seg_dur,
+              transcodeTime: transtime,
+              uploadTime: uptime,
+              downloadTime: downtime,
             };
             statsList.push(parsedRecord);
           }
@@ -139,7 +143,12 @@ class TranscodingStatsTable extends React.Component {
 
   componentDidMount() {
     // Simple GET request using fetch
-    this.fetchData(this.props.address);
+    console.log('componentDidMount', this.props);
+
+    if (this.props.address !== '') {
+      console.log('componentDidMount - calling fetch',);
+      this.fetchData(this.props.address);
+    }
   }
 
   componentDidUpdate(prevProps) {
